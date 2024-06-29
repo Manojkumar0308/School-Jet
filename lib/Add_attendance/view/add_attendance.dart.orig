@@ -1,0 +1,408 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../add_homework/view_model/add_homeWork_view_model.dart';
+import '../../menu/view_model/menu_view_model.dart';
+import '../../send_message/view_model/send_message_view_model.dart';
+import '../../utils/appcolors.dart';
+import '../../utils/common_methods.dart';
+import '../view_model/view_model.dart';
+import 'package:intl/intl.dart';
+
+class AddAttendanceScreen extends StatefulWidget {
+  const AddAttendanceScreen({super.key});
+
+  @override
+  State<AddAttendanceScreen> createState() => _AddAttendanceScreenState();
+}
+
+class _AddAttendanceScreenState extends State<AddAttendanceScreen> {
+  Map<String, dynamic>? singleSelectedClassName;
+  Map<String, dynamic>? singleSelectedSectionName;
+  bool buttonTap = false;
+  bool editTap = false;
+  bool showSnackbarOnce = false;
+
+  List<String> selectedAttendanceValues = [];
+  //selectedAttendanceValues use to store attendance value for a particular index student.
+
+  @override
+  void initState() {
+    super.initState();
+    CommonMethods().initCall(context);
+    //api calling using provider package at initial level of screen.
+    Provider.of<SendMessageViewModel>(context, listen: false).fetchClasses();
+    Provider.of<SendMessageViewModel>(context, listen: false).fetchSections();
+    Provider.of<HomeworkProvider>(context, listen: false).savedData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    //It retrieves the instance of SendMessageViewModel and assigns it to the provider variable.
+    final provider = Provider.of<SendMessageViewModel>(context);
+    // It retrieves the instance of AttendanceViewModel and assigns it to the getStudent variable.
+    final getStudent = Provider.of<AttendanceViewModel>(context);
+    DateTime now = DateTime.now();
+    //above code retreieves current DateTime.
+    final showingDate = DateFormat.yMMMEd().format(DateTime.now());
+    //above line is for date format 03,May,2023
+    final currentDate = DateFormat("yyyyMMdd").format(now);
+    //above line is for date format 20230919 year month and date with no space.
+    final formattedDate = currentDate + '000000'.toString();
+    //adding 6 zeros at the end as a string in currentDate using for api calling.
+    final menuProvider = Provider.of<MenuViewModel>(context);
+    //It retrieves the instance of MenuViewModel and assigns it to the menuProvider variable.
+
+    final teacherInfo = menuProvider.teacherInfo;
+    final teacherName = teacherInfo?.tname ?? 'N/A';
+    final teacherEmail = teacherInfo?.email ?? 'N/A';
+    final teacherContact = teacherInfo?.contactno ?? 'N/A';
+    final teacherPhoto = teacherInfo?.photo.toString();
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Appcolor.themeColor,
+        toolbarHeight: 70,
+        titleSpacing: 2,
+        elevation: 0,
+        title: Row(
+          children: [
+            IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.arrow_back)),
+            menuProvider.fileExists
+                ? Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                        shape: BoxShape.circle, color: Appcolor.lightgrey),
+                    child: teacherPhoto == null
+                        ? ClipOval(
+                            child: Image.asset(
+                              'assets/images/user_profile.png',
+                              fit: BoxFit.cover,
+                            ),
+                          ) // Replace with your asset image path
+                        : ClipOval(
+                            child: menuProvider.isLoading
+                                ? const Center(
+                                    child: CupertinoActivityIndicator(
+                                        color: Appcolor.themeColor),
+                                  )
+                                : Image.network(
+                                    teacherPhoto,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      // Handle network image loading error here
+                                      return Image.asset(
+                                          'assets/images/user_profile.png'); // Replace with your error placeholder image
+                                    },
+                                  ),
+                          ),
+                  )
+                : Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                        shape: BoxShape.circle, color: Appcolor.lightgrey),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/user_profile.png',
+                        fit: BoxFit.cover,
+                      ),
+                    )),
+            Padding(
+              padding: const EdgeInsets.only(left: 15.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3.0),
+                    child: Text(
+                      'Name:$teacherName',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12),
+                    ),
+                  ),
+                  Text(
+                    'Email: $teacherEmail',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2.0),
+                    child: Text(
+                      'Contact: $teacherContact',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0),
+                child: DropdownButtonFormField<Map<String, dynamic>>(
+                  decoration: InputDecoration(
+                    labelText: 'Select Class',
+                    labelStyle: const TextStyle(color: Colors.black),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Appcolor.themeColor),
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Appcolor.themeColor),
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                  ),
+                  value: singleSelectedClassName,
+                  items: provider.classesData
+                      .map<DropdownMenuItem<Map<String, dynamic>>>(
+                    (classData) {
+                      return DropdownMenuItem<Map<String, dynamic>>(
+                        value: classData,
+                        child: Text(
+                          classData['className'],
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      );
+                    },
+                  ).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value != null) {
+                        singleSelectedClassName = value;
+                      } else {
+                        if (kDebugMode) {
+                          print(value);
+                        }
+                      }
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              DropdownButtonFormField<Map<String, dynamic>>(
+                decoration: InputDecoration(
+                  labelText: 'Select Section',
+                  labelStyle: const TextStyle(color: Colors.black),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Appcolor.themeColor),
+                    borderRadius: BorderRadius.circular(5.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Appcolor.themeColor),
+                    borderRadius: BorderRadius.circular(5.0),
+                  ),
+                ),
+                value: singleSelectedSectionName,
+                items: provider.sectionData
+                    .map<DropdownMenuItem<Map<String, dynamic>>>(
+                  (sectionData) {
+                    return DropdownMenuItem<Map<String, dynamic>>(
+                      value: sectionData,
+                      child: Text(
+                        sectionData['sectionName'],
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    );
+                  },
+                ).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    if (value != null) {
+                      singleSelectedSectionName = value;
+                    }
+                  });
+                },
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              TextField(
+                readOnly: true,
+                decoration: InputDecoration(
+                  hintText: showingDate.toString(),
+                  hintStyle: const TextStyle(color: Colors.black),
+                  border: InputBorder.none,
+                  enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Appcolor.themeColor),
+                      borderRadius: BorderRadius.circular(5)),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Appcolor.themeColor),
+                    borderRadius: BorderRadius.circular(5.0),
+                  ),
+                  suffixIcon: const Icon(
+                    Icons.calendar_month,
+                    color: Appcolor.themeColor,
+                  ),
+                ),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    buttonTap = true;
+                  });
+                  if (singleSelectedClassName?['className'] != null &&
+                      singleSelectedSectionName?['sectionName'] != null) {
+                    getStudent.getStudentByFilter(
+                        singleSelectedClassName!['className'].toString(),
+                        singleSelectedSectionName!['sectionName'].toString(),
+                        context);
+                  } else {
+                    if (singleSelectedClassName?['className'] != null) {
+                      CommonMethods().showSnackBar(context, 'Enter Class');
+                    } else if (singleSelectedSectionName?['sectionName'] !=
+                        null) {
+                      CommonMethods().showSnackBar(context, 'Enter Section');
+                    } else if (singleSelectedClassName?['className'] == null &&
+                        singleSelectedSectionName?['sectionName'] == null) {
+                      CommonMethods()
+                          .showSnackBar(context, 'Both fields are mandatory');
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor:
+                      Appcolor.themeColor, // Set the text color on the button.
+                  elevation: 5, // Adjust the button's elevation.
+                ),
+                child: const Text('Get Students'),
+              ),
+              getStudent.isLoading && getStudent.students.isNotEmpty
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Appcolor.themeColor,
+                      ),
+                    )
+                  : buttonTap && getStudent.students.isNotEmpty
+                      //Table with row and column to show student list with attendance value P,A,L
+                      ? DataTable(
+                          columns: const <DataColumn>[
+                            DataColumn(label: Text('S.No')),
+                            DataColumn(label: Text('Student Name')),
+                            DataColumn(label: Text('Attendance')),
+                          ],
+                          rows: List<DataRow>.generate(
+                            getStudent.students.length,
+                            (int index) {
+                              //by default attendance value for each index student.
+                              selectedAttendanceValues.add('P');
+                              return DataRow(
+                                cells: <DataCell>[
+                                  DataCell(Text('${index + 1}')), // S.No
+                                  DataCell(Text(getStudent.students[index]
+                                      .stuName!)), // Student Name
+                                  DataCell(
+                                    Center(
+                                      child: DropdownButton<String>(
+                                        value: selectedAttendanceValues[
+                                            index], // Default value
+                                        onChanged: (String? newValue) {
+                                          setState(() {
+                                            selectedAttendanceValues[index] =
+                                                newValue!;
+                                          });
+                                        },
+                                        items: <String>[
+                                          'P',
+                                          'A',
+                                          'L'
+                                        ] // Dropdown options
+                                            .map<DropdownMenuItem<String>>(
+                                          (String value) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    right: 10.0),
+                                                child: Text(value),
+                                              ),
+                                            );
+                                          },
+                                        ).toList(),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        )
+                      : const SizedBox.shrink()
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: () {
+                for (int i = 0; i < getStudent.students.length; i++) {
+                  String regNo = getStudent.students[i].regNo.toString();
+                  String attendanceValue =
+                      selectedAttendanceValues[i]; // Get the attendance value
+
+                  // Call the addAttendance function for each student
+                  getStudent.addAttendance(
+                      regNo, formattedDate, attendanceValue, context);
+                }
+
+                selectedAttendanceValues.clear();
+
+                // Reset other state variables to their initial values
+                setState(() {
+                  singleSelectedClassName = null;
+                  singleSelectedSectionName = null;
+                  buttonTap = false;
+                  getStudent.students.clear(); // Clear student data
+                });
+              },
+              child: Container(
+                height: size.height * 0.06,
+                color: Appcolor.themeColor,
+                child: const Center(
+                    child: Text(
+                  'Submit',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold),
+                )),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

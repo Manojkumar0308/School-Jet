@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "715425522565",
+    "firebase_url": "https://my-apptab.firebaseio.com",
+    "project_id": "my-apptab",
+    "storage_bucket": "my-apptab.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:715425522565:android:6c329ac372e98d1c93daec",
+        "android_client_info": {
+          "package_name": "com.citron.school_jet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "715425522565-gfe0n3l22rcphp1upkcsub5lh4ijhbth.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.citron.school_jet",
+            "certificate_hash": "5e0a5f09a88ee3f035b4d22c203edbb08e175c02"
+          }
+        },
+        {
+          "client_id": "715425522565-9bfdc6gigimtmn1l8eitu9qfjq7on3ie.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDllwEsVP1FvpeLTI5iBqnAUVoKqFPLW2U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "715425522565-9bfdc6gigimtmn1l8eitu9qfjq7on3ie.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
